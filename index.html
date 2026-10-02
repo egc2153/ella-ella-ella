@@ -2,41 +2,94 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Anscombe's Quartet</title>
+  <title>Reverse Engineering</title>
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
+      margin: 0;
+      min-height: 100vh;
+      background: #fffff6;
+      color: #4b4b48;
+      font-family: Georgia, "Times New Roman", serif;
     }
-  
-  #chart {
-    display: grid;
-    grid-template-columns: repeat(2, 500px);
-    gap: 20px;
-    justify-content: center;
-  }
-  
-  .panel {
-    text-align: left;
-    padding: 12px;
-    border-radius: 36px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  .label {
-    margin-left: 16px;  
-    margin-bottom: 0px;
-    margin-top: 10px;
-    font-weight: bold;
-    display: block;
-    font-size: 20px;
-   }
+    main {
+      width: min(100%, 1000px);
+      margin: 0 auto;
+      padding: 24px 18px 16px;
+    }
+    .visualization {
+      width: min(100%, 700px);
+      margin: 0 auto;
+    }
+    .intro {
+      width: 100%;
+      margin: 0 0 48px;
+      padding: 0 4.143% 0 15.714%;
+    }
+    .intro h1 {
+      margin: 0 0 8px;
+      color: #595957;
+      font-size: 24px;
+      font-weight: 400;
+      line-height: 1.13;
+    }
+    .intro p {
+      margin: 0;
+      color: #858273;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    #chart { width: 100%; }
+    #chart svg {
+      display: block;
+      width: min(100%, 700px);
+      height: auto;
+      margin: 0 auto;
+      overflow: visible;
+    }
+    .word-tooltip {
+      position: fixed;
+      z-index: 10;
+      display: none;
+      padding: 2px 8px 6px;
+      border: 1px solid #514b40;
+      border-radius: 3px;
+      background: #f3a343;
+      color: #433b30;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 24px;
+      font-style: italic;
+      font-variant: small-caps;
+      line-height: 1;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .caption {
+      max-width: 580px;
+      margin: 0 auto;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .caption strong { font-weight: 400; }
+    @media (max-width: 600px) {
+      main { padding: 14px 8px; }
+      .caption { font-size: 12px; }
+    }
   </style>
 </head>
 
 <body>
-
-  <div id="chart"></div>
+  <main>
+    <div class="visualization">
+      <header class="intro">
+        <h1>Nouns Still Dominate Both Lists, Verbs Remained Steady, and Adjectives Grew Modestly. Adverbs, However, Nearly Doubled</h1>
+        <p>Each square is one word, grouped by part-of-speech in each list. Hover the cells to see the words.</p>
+      </header>
+      <div id="chart" aria-label="Comparison of words in the 1953 and 2023 lists, grouped by part of speech"></div>
+    </div>
+    <p class="caption" id="caption"></p>
+  </main>
 
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="script.js"></script>
