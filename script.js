@@ -1,186 +1,296 @@
-d3.csv("ev-data - part-of-speech.csv").then(function(data) {
-  const categories = [
-    { name: "NOUNS", pos: "noun", columns: 41 },
-    { name: "ADJECTIVES", pos: "adjective", columns: 10 },
-    { name: "ADVERBS", pos: "adverb", columns: 10 },
-    { name: "VERBS", pos: "verb", columns: 10 },
-    { name: "OTHER", pos: "other", columns: 10 }
+Promise.all([
+  d3.csv("Artists.txt"),
+  d3.csv("19artists.txt")
+]).then(function([allArtists, featuredArtists]) {
+  const regions = [
+    "United States",
+    "Other Americas",
+    "Europe",
+    "Asia",
+    "Africa",
+    "Oceania",
+    "Unclassified"
   ];
-  const colors = {
-    remained: "#e0dbc1",
-    removed: "#f39f31",
-    added: "#df78ff"
+  const regionColors = {
+    "United States": "#e76f51",
+    "Other Americas": "#e9a23b",
+    Europe: "#568f82",
+    Asia: "#5277a8",
+    Africa: "#a16b9a",
+    Oceania: "#829447",
+    Unclassified: "#929292"
   };
-  const svgWidth = 700;
-  const svgHeight = 660;
-  const plotX = 110;
-  const cellSize = 5;
-  const cellStep = 6;
-  const categoryGap = 20;
-  const firstRowBottom = 280;
-  const secondRowTop = 316;
+  const regionAssignments = {
+    "United States": [
+      "American", "United States", "Native American"
+    ],
+    "Other Americas": [
+      "Argentine", "Argentinian", "Bahamian", "Barbadian", "Belizean",
+      "Bermudian", "Bolivian", "Brazilian", "Canadian", "Chilean",
+      "Colombian", "Costa Rican", "Cuban", "Dominican", "Ecuadorian",
+      "Guatemalan", "Haitian", "Honduran", "Jamaican", "Mexican",
+      "Nicaraguan", "Panamanian", "Paraguayan", "Peruvian", "Puerto Rican",
+      "Salvadoran", "Trinidadian", "Uruguayan", "Venezuelan"
+    ],
+    Europe: [
+      "Albanian", "Austrian", "Belgian", "British", "Bulgarian", "Catalan",
+      "Croatian", "Cypriot", "Czech", "Danish", "Dutch", "English",
+      "Estonian", "Finnish", "French", "Georgian", "German", "Greek",
+      "Hungarian", "Icelandic", "Irish", "Italian", "Latvian", "Lithuanian",
+      "Luxembourgish", "Macedonian", "Maltese", "Moldovan", "Montenegrin",
+      "Norwegian", "Polish", "Portuguese", "Romanian", "Russian", "Scottish",
+      "Serbian", "Slovak", "Slovenian", "Spanish", "Swedish", "Swiss",
+      "Ukrainian", "Welsh", "Yugoslav"
+    ],
+    Asia: [
+      "Afghan", "Armenian", "Azerbaijani", "Bangladeshi", "Bhutanese",
+      "Burmese", "Cambodian", "Chinese", "Filipino", "Indian", "Indonesian",
+      "Iranian", "Iraqi", "Israeli", "Japanese", "Jordanian", "Kazakh",
+      "Korean", "Kuwaiti", "Kyrgyz", "Laotian", "Lebanese", "Malaysian",
+      "Mongolian", "Nepalese", "Pakistani", "Palestinian", "Singaporean",
+      "Sri Lankan", "Syrian", "Taiwanese", "Thai", "Tibetan", "Turkish",
+      "Uzbek", "Vietnamese", "Yemeni"
+    ],
+    Africa: [
+      "Algerian", "Angolan", "Beninese", "Botswanan", "Burkinabé",
+      "Cameroonian", "Congolese", "Egyptian", "Eritrean", "Ethiopian",
+      "Ghanaian", "Ivorian", "Kenyan", "Libyan", "Malagasy", "Malian",
+      "Moroccan", "Mozambican", "Nigerian", "Senegalese", "Somali",
+      "South African", "Sudanese", "Tanzanian", "Tunisian", "Ugandan",
+      "Zambian", "Zimbabwean"
+    ],
+    Oceania: [
+      "Australian", "Fijian", "Maori", "New Zealander", "Papua New Guinean"
+    ]
+  };
+  const regionByNationality = new Map();
 
-  data.forEach(function(d) {
-    d.word = d.word.trim();
-    d.set = d.set.trim().toLowerCase();
-    d.pos = d.pos.trim().toLowerCase();
+  regions.slice(0, -1).forEach(function(region) {
+    regionAssignments[region].forEach(function(nationality) {
+      regionByNationality.set(nationality.toLowerCase(), region);
+    });
   });
 
+  function assignRegion(nationality) {
+    return regionByNationality.get((nationality || "").trim().toLowerCase()) || "Unclassified";
+  }
+
+  function countByRegion(rows) {
+    const counts = new Map(regions.map(function(region) {
+      return [region, 0];
+    }));
+
+    rows.forEach(function(row) {
+      counts.set(assignRegion(row.Nationality), counts.get(assignRegion(row.Nationality)) + 1);
+    });
+
+    return counts;
+  }
+
+  const allCounts = countByRegion(allArtists);
+  const featuredCounts = countByRegion(featuredArtists);
+  const allTotal = allArtists.length;
+  const featuredTotal = featuredArtists.length;
+  const data = regions.map(function(region) {
+    const allCount = allCounts.get(region);
+    const featuredCount = featuredCounts.get(region);
+    return {
+      region: region,
+      allCount: allCount,
+      featuredCount: featuredCount,
+      allShare: allCount / allTotal,
+      featuredShare: featuredCount / featuredTotal
+    };
+  });
+  const width = 860;
+  const height = 520;
+  const margin = { top: 82, right: 32, bottom: 100, left: 76 };
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
   const svg = d3.select("#chart")
     .append("svg")
-    .attr("viewBox", `0 0 ${svgWidth} ${svgHeight}`)
+    .attr("viewBox", `0 0 ${width} ${height}`)
     .attr("role", "img")
     .attr("aria-labelledby", "chart-title chart-description");
-  const tooltip = d3.select("#chart")
-    .append("div")
-    .attr("class", "word-tooltip")
-    .attr("role", "tooltip");
-
-  function positionTooltip(event) {
-    const bounds = tooltip.node().getBoundingClientRect();
-    let left = event.clientX + 14;
-    let top = event.clientY - bounds.height - 12;
-
-    if (left + bounds.width > window.innerWidth - 8) {
-      left = event.clientX - bounds.width - 14;
-    }
-    if (top < 8) {
-      top = event.clientY + 14;
-    }
-
-    left = Math.max(8, Math.min(left, window.innerWidth - bounds.width - 8));
-    top = Math.max(8, Math.min(top, window.innerHeight - bounds.height - 8));
-    tooltip.style("left", `${left}px`).style("top", `${top}px`);
-  }
 
   svg.append("title")
     .attr("id", "chart-title")
-    .text("Changes in a word list from 1953 to 2023");
+    .text("Nationality regions of MoMA featured artists compared with all artists");
   svg.append("desc")
     .attr("id", "chart-description")
-    .text("Each square represents one word, grouped by part of speech. Gray words are in both lists, orange words were removed, and magenta words were added.");
+    .text("Overlaid percentage bars compare each region's share of the 19 featured artists with its share of all artists in the MoMA Artists dataset. A pie chart shows the featured artists' share of the overall dataset.");
 
-  const categoryPositions = [];
-  let nextX = plotX;
-  categories.forEach(function(category) {
-    categoryPositions.push(nextX);
-    nextX += category.columns * cellStep - 1 + categoryGap;
-  });
+  const plot = svg.append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+  const x = d3.scaleBand()
+    .domain(regions)
+    .range([0, innerWidth])
+    .padding(0.28);
+  const y = d3.scaleLinear()
+    .domain([0, 1])
+    .range([innerHeight, 0]);
+  const percent = d3.format(".0%");
+
+  plot.append("g")
+    .attr("class", "y-axis")
+    .call(d3.axisLeft(y).ticks(5).tickFormat(percent));
+  plot.append("g")
+    .attr("class", "x-axis")
+    .attr("transform", `translate(0,${innerHeight})`)
+    .call(d3.axisBottom(x));
+  plot.selectAll(".domain, .tick line")
+    .attr("stroke", "#c9c7c0");
+  plot.selectAll(".tick text")
+    .attr("fill", "#4b4b48")
+    .attr("font-family", "Arial, sans-serif")
+    .attr("font-size", 12);
+  plot.selectAll(".y-axis .tick line")
+    .attr("x2", innerWidth)
+    .attr("stroke", "#e7e5df");
+  plot.selectAll(".y-axis .domain").attr("stroke", "none");
+
+  plot.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -innerHeight / 2)
+    .attr("y", -54)
+    .attr("text-anchor", "middle")
+    .attr("fill", "#4b4b48")
+    .attr("font-family", "Arial, sans-serif")
+    .attr("font-size", 13)
+    .text("Share of artists in each dataset");
+
+  const tooltip = d3.select("#chart")
+    .append("div")
+    .attr("class", "chart-tooltip")
+    .attr("role", "tooltip");
+  const groups = plot.selectAll(".region-group")
+    .data(data)
+    .join("g")
+    .attr("class", "region-group")
+    .attr("transform", function(d) { return `translate(${x(d.region)},0)`; });
+  const allBarWidth = x.bandwidth() * 0.44;
+  const featuredBarWidth = x.bandwidth() * 0.44;
+
+  function showTooltip(event, d, series) {
+    const count = series === "all" ? d.allCount : d.featuredCount;
+    const share = series === "all" ? d.allShare : d.featuredShare;
+    const total = series === "all" ? allTotal : featuredTotal;
+    tooltip
+      .style("display", "block")
+      .text(`${d.region} — ${series === "all" ? "All artists" : "Featured artists"}: ${count} of ${total} (${percent(share)})`);
+    const bounds = tooltip.node().getBoundingClientRect();
+    const left = Math.min(event.clientX + 12, window.innerWidth - bounds.width - 8);
+    const top = Math.max(8, event.clientY - bounds.height - 10);
+    tooltip.style("left", `${Math.max(8, left)}px`).style("top", `${top}px`);
+  }
+
+  groups.append("rect")
+    .attr("class", "all-bar")
+    .attr("x", x.bandwidth() * 0.08)
+    .attr("y", function(d) { return y(d.allShare); })
+    .attr("width", allBarWidth)
+    .attr("height", function(d) { return innerHeight - y(d.allShare); })
+    .attr("fill", function(d) { return regionColors[d.region]; })
+    .attr("opacity", 0.33)
+    .on("pointerenter", function(event, d) { showTooltip(event, d, "all"); })
+    .on("pointermove", function(event, d) { showTooltip(event, d, "all"); })
+    .on("pointerleave", function() { tooltip.style("display", "none"); });
+
+  groups.append("rect")
+    .attr("class", "featured-bar")
+    .attr("x", x.bandwidth() * 0.35)
+    .attr("y", function(d) { return y(d.featuredShare); })
+    .attr("width", featuredBarWidth)
+    .attr("height", function(d) { return innerHeight - y(d.featuredShare); })
+    .attr("fill", function(d) { return regionColors[d.region]; })
+    .attr("opacity", .85)
+    .on("pointerenter", function(event, d) { showTooltip(event, d, "featured"); })
+    .on("pointermove", function(event, d) { showTooltip(event, d, "featured"); })
+    .on("pointerleave", function() { tooltip.style("display", "none"); });
 
   const legend = svg.append("g")
-    .attr("transform", `translate(${plotX + 360}, 20)`);
-  const legendItems = [
-    { label: "IN BOTH LISTS", color: colors.remained },
-    { label: "REMOVED FROM THE 1953 LIST", color: colors.removed },
-    { label: "ADDED TO THE 2023 LIST", color: colors.added }
-  ];
-
-  legendItems.forEach(function(item, index) {
-    const y = index * 17;
+    .attr("class", "legend")
+    .attr("transform", `translate(${margin.left},28)`);
+  [
+    { label: "All artists", opacity: 0.33 },
+    { label: "19 featured artists", opacity: .85 }
+  ].forEach(function(item, index) {
+    const xPosition = index * 190;
     legend.append("rect")
-      .attr("x", 0)
-      .attr("y", y + 2)
-      .attr("width", 5)
-      .attr("height", 5)
-      .attr("fill", item.color);
+      .attr("x", xPosition)
+      .attr("y", 0)
+      .attr("width", 18)
+      .attr("height", 14)
+      .attr("fill", "#568f82")
+      .attr("opacity", item.opacity);
     legend.append("text")
-      .attr("x", 15)
-      .attr("y", y + 9)
-      .attr("fill", "#555550")
-      .attr("font-family", "Courier New bold, monospace")
-      .attr("font-size", 12)
+      .attr("x", xPosition + 26)
+      .attr("y", 12)
+      .attr("fill", "#4b4b48")
+      .attr("font-family", "Arial, sans-serif")
+      .attr("font-size", 13)
       .text(item.label);
   });
-  legend.append("line")
-    .attr("x1", 0)
-    .attr("x2", 213)
-    .attr("y1", 54)
-    .attr("y2", 54)
-    .attr("stroke", "#deded2")
-    .attr("stroke-width", 1);
 
-  function drawLabel(text, x, y, anchor, size) {
-    svg.append("text")
-      .attr("x", x)
-      .attr("y", y)
-      .attr("text-anchor", anchor)
-      .attr("fill", "#4f4f4b")
-      .attr("font-family", "Courier New, monospace")
-      .attr("font-size", size)
-      .attr("font-weight", "bold")
-      .text(text);
-  }
+  const remainingTotal = allTotal - featuredTotal;
+  const featuredOverallShare = featuredTotal / allTotal;
+  const overallPercent = d3.format(".2%");
+  const pieGroup = svg.append("g")
+    .attr("class", "subset-pie")
+    .attr("transform", `translate(${width - 168},43)`);
+  const pieData = d3.pie()
+    .sort(null)
+    .value(function(d) { return d.value; })([
+      { label: "Featured artists", value: featuredTotal },
+      { label: "Other artists", value: remainingTotal }
+    ]);
+  const pieArc = d3.arc()
+    .innerRadius(0)
+    .outerRadius(25);
+  const pieColors = ["#568f82", "#deded8"];
 
-  function drawWordTiles(words, category, x, rowTop, rowBottom, statusOrder, partialFirstRow) {
-    const sortedWords = words.slice().sort(function(a, b) {
-      const statusDifference = statusOrder.indexOf(a.set) - statusOrder.indexOf(b.set);
-      return statusDifference || d3.ascending(a.word, b.word);
+  pieGroup.selectAll("path")
+    .data(pieData)
+    .join("path")
+    .attr("d", pieArc)
+    .attr("fill", function(d, index) { return pieColors[index]; })
+    .attr("stroke", "#fffff6")
+    .attr("stroke-width", 0.7)
+    .append("title")
+    .text(function(d) {
+      return `${d.data.label}: ${d.data.value} (${overallPercent(d.data.value / allTotal)})`;
     });
-    const rowCount = Math.ceil(sortedWords.length / category.columns);
-    const startY = rowTop === null ? rowBottom - rowCount * cellStep : rowTop;
-    const firstRowSize = sortedWords.length % category.columns || category.columns;
 
-    const tiles = svg.append("g")
-      .selectAll("rect")
-      .data(sortedWords)
-      .join("rect")
-      .attr("x", function(d, index) {
-        const tileIndex = partialFirstRow ? (index < firstRowSize ? index : index - firstRowSize) : index;
-        return x + (tileIndex % category.columns) * cellStep;
-      })
-      .attr("y", function(d, index) {
-        const tileIndex = partialFirstRow ? (index < firstRowSize ? 0 : index - firstRowSize + category.columns) : index;
-        return startY + Math.floor(tileIndex / category.columns) * cellStep;
-      })
-      .attr("width", cellSize)
-      .attr("height", cellSize)
-      .attr("fill", function(d) { return colors[d.set]; });
+  pieGroup.append("text")
+    .attr("x", 34)
+    .attr("y", -5)
+    .attr("fill", "#4b4b48")
+    .attr("font-family", "Arial, sans-serif")
+    .attr("font-size", 12)
+    .attr("font-weight", "bold")
+    .text("Share of all artists");
+  pieGroup.append("text")
+    .attr("x", 34)
+    .attr("y", 10)
+    .attr("fill", "#4b4b48")
+    .attr("font-family", "Arial, sans-serif")
+    .attr("font-size", 12)
+    .text(`${overallPercent(featuredOverallShare)} featured`);
+  pieGroup.append("text")
+    .attr("x", 34)
+    .attr("y", 25)
+    .attr("fill", "#77766e")
+    .attr("font-family", "Arial, sans-serif")
+    .attr("font-size", 11)
+    .text(`${d3.format(",")(featuredTotal)} of ${d3.format(",")(allTotal)} records`);
 
-    tiles
-      .on("pointerenter", function(event, d) {
-        d3.select(this).attr("stroke", "#765d3d").attr("stroke-width", 1);
-        tooltip
-          .style("display", "block")
-          .style("background-color", colors[d.set])
-          .text(d.word);
-        positionTooltip(event);
-      })
-      .on("pointermove", positionTooltip)
-      .on("pointerleave", function() {
-        d3.select(this).attr("stroke", null).attr("stroke-width", null);
-        tooltip.style("display", "none");
-      });
-  }
-
-  const firstList = data.filter(function(d) {
-    return d.set === "remained" || d.set === "removed";
-  });
-  const secondList = data.filter(function(d) {
-    return d.set === "remained" || d.set === "added";
-  });
-
-  categories.forEach(function(category, index) {
-    const categoryX = categoryPositions[index];
-    const firstWords = firstList.filter(function(d) { return d.pos === category.pos; });
-    const secondWords = secondList.filter(function(d) { return d.pos === category.pos; });
-
-    drawWordTiles(firstWords, category, categoryX, null, firstRowBottom, ["remained", "removed"], category.pos !== "verb");
-    drawWordTiles(secondWords, category, categoryX, secondRowTop, null, ["added", "remained"]);
-    drawLabel(category.name, categoryX + (category.columns * cellStep - 1) / 2, 304, "middle", 12);
-  });
-
-  drawLabel("1953 LIST", plotX - 12, firstRowBottom - 2, "end", 16);
-  drawLabel("2023 LIST", plotX - 12, secondRowTop + 12, "end", 16);
-
-  const firstCount = firstList.length;
-  const secondCount = secondList.length;
-  d3.select("#caption").html(
-    `The 2023 list contains more words overall (<strong>${d3.format(",")(secondCount)}</strong> vs. <strong>${d3.format(",")(firstCount)}</strong>). All changes mentioned in the text reflect each category's share of its list, not raw counts. Data source: NLTK (Natural Language Toolkit), with manual correction of mislabeled words.`
+  d3.select("#caption").text(
+    `Each bar shows a region's percentage of its dataset (${d3.format(",")(allTotal)} artist records overall; ${featuredTotal} featured artists). Nationality labels are grouped into regions; the featured artists are part of the full dataset, not an independent sample. Unmapped nationality labels are shown as Unclassified. Source: MoMA Artists dataset.`
   );
 }).catch(function(error) {
   d3.select("#chart")
     .append("p")
     .attr("role", "alert")
-    .text("The word-list data could not be loaded. Open this page through a local web server and check that the CSV is beside index.html.");
+    .text("The artist data could not be loaded. Open this page through a local web server and check that Artists.txt and 19artists.txt are beside index.html.");
   console.error(error);
 });

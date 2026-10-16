@@ -1,0 +1,20 @@
+ConstituentID,DisplayName,ArtistBio,Nationality,Gender,BeginDate,EndDate,Wiki QID,ULAN
+21,Ruth Asawa,"American, 1926–2013",American,female,1926,2013,Q7382874,500077806
+370,Jean-Michel Basquiat,"American, 1960–1988",American,male,1960,1988,Q155407,500093239
+1364,Salvador Dalí,"Spanish, 1904–1989",Spanish,male,1904,1989,Q5577,500009365
+1444,Marcel Duchamp,"American, born France. 1887–1968",American,male,1887,1968,Q5912,500115393
+2206,Vincent van Gogh,"Dutch, 1853–1890",Dutch,male,1853,1890,Q5582,500115588
+2505,Keith Haring,"American, 1958–1990",American,male,1958,1990,Q485635,500024253
+2506,Robert Indiana,"American, 1928–2018",American,male,1928,2018,Q169281,500015478
+2644,Frida Kahlo,"Mexican, 1907–1954",Mexican,female,1907,1954,Q5588,500030701
+2956,Yayoi Kusama,"Japanese, 1929–2026",Japanese,female,1929,2026,Q231121,500122518
+3434,Henri Matisse,"French, 1869–1954",French,male,1869,1954,Q5589,500017300
+3607,Joan Miró,"Spanish, 1893–1983",Spanish,male,1893,1983,Q152384,500014094
+3643,Piet Mondrian,"Dutch, 1872–1944",Dutch,male,1872,1944,Q151803,500004972
+3644,Claude Monet,"French, 1840–1926",French,male,1840,1926,Q296,500019484
+3908,Georgia O'Keeffe,"American, 1887–1986",American,female,1887,1986,Q46408,500018666
+4431,Diego Rivera,"Mexican, 1886–1957",Mexican,male,1886,1957,Q171128,500025126
+6349,Faith Ringgold,"American, 1930–2024",American,female,1930,2024,Q5431220,500063866
+9523,Yoshitomo Nara,"Japanese, born 1959",Japanese,male,1959,0,Q2015324,500033169
+13672,Alma Woodsey Thomas,"American, 1891–1978",American,female,1891,1978,,
+14849,Hilma af Klint,"Swedish, 1862–1944",Swedish,female,1862,1944,,

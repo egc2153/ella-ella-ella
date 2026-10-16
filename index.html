@@ -2,79 +2,142 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Reverse Engineering</title>
+  <title>Featured Artists and the MoMA Artist Dataset</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
-      background: #fffff6;
-      color: #4b4b48;
-      font-family: Georgia, "Times New Roman", serif;
+      padding: 28px 12px;
+      background: #ffffff;
+      color: #24231f;
+      font-family: "Courier New", Courier, monospace;
     }
     main {
-      width: min(100%, 1000px);
+      position: relative;
+      width: min(100%, 960px);
       margin: 0 auto;
-      padding: 24px 18px 16px;
+      padding: 34px clamp(16px, 5vw, 52px) 38px;
+      background-color: #f8f9f7;
+      background-image:
+        radial-gradient(ellipse at 18% 20%, #858a8420 0, transparent 26%),
+        radial-gradient(ellipse at 76% 24%, #858a841c 0, transparent 28%),
+        radial-gradient(ellipse at 41% 74%, #858a8418 0, transparent 31%),
+        radial-gradient(ellipse at 88% 78%, #858a8415 0, transparent 23%),
+        radial-gradient(#70766f0e 0.45px, transparent 0.8px),
+        conic-gradient(from 212deg at 16% 22%, #ffffffa0 0deg, transparent 25deg, #777c7618 50deg, transparent 78deg, #ffffff80 112deg, transparent 145deg),
+        conic-gradient(from 35deg at 49% 42%, #ffffff99 0deg, transparent 28deg, #777c7618 53deg, transparent 83deg, #ffffff80 118deg, transparent 152deg),
+        conic-gradient(from 162deg at 82% 56%, #ffffff99 0deg, transparent 26deg, #777c7618 56deg, transparent 87deg, #ffffff80 120deg, transparent 155deg),
+        conic-gradient(from 300deg at 27% 83%, #ffffff99 0deg, transparent 30deg, #777c7618 59deg, transparent 91deg, #ffffff80 124deg, transparent 158deg),
+        conic-gradient(from 75deg at 72% 87%, #ffffff99 0deg, transparent 27deg, #777c7618 55deg, transparent 89deg, #ffffff80 123deg, transparent 158deg);
+      background-size: auto, auto, auto, auto, 9px 9px, auto, auto, auto, auto, auto;
+      filter: drop-shadow(0 5px 8px #17171324);
+      clip-path: polygon(
+        0.7% 0.2%, 7% 0.5%, 14% 0.1%, 22% 0.4%, 31% 0.1%, 40% 0.4%,
+        49% 0.1%, 58% 0.4%, 67% 0.1%, 76% 0.4%, 85% 0.1%, 93% 0.4%,
+        99.5% 0.1%, 99.8% 12%, 99.6% 24%, 100% 37%, 99.7% 51%,
+        100% 64%, 99.6% 77%, 99.9% 88%, 99.6% 97%, 97% 97.3%,
+        94% 96.9%, 91% 97.4%, 88% 97%, 85% 97.5%, 82% 97%,
+        79% 97.4%, 76% 97%, 73% 97.5%, 70% 97%, 67% 97.4%,
+        64% 97%, 61% 97.5%, 58% 97%, 55% 97.4%, 52% 97%,
+        49% 97.5%, 46% 97%, 43% 97.4%, 40% 97%, 37% 97.5%,
+        34% 97%, 31% 97.4%, 28% 97%, 25% 97.5%, 22% 97%,
+        19% 97.4%, 16% 97%, 13% 97.5%, 10% 97%, 7% 97.4%,
+        4% 97%, 1% 97.4%, 0.5% 84%, 0.8% 70%, 0.4% 57%,
+        0.7% 43%, 0.4% 29%, 0.8% 15%
+      );
     }
     .visualization {
-      width: min(100%, 700px);
+      width: min(100%, 850px);
       margin: 0 auto;
     }
     .intro {
       width: 100%;
-      margin: 0 0 48px;
-      padding: 0 4.143% 0 15.714%;
+      margin: 0 0 18px;
+      padding: 0 0 17px;
+      border-bottom: 1px dashed #77736a;
+      text-align: center;
+    }
+    .receipt-brand {
+      margin: 0 0 7px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
     }
     .intro h1 {
-      margin: 0 0 8px;
-      color: #595957;
-      font-size: 24px;
-      font-weight: 400;
-      line-height: 1.13;
+      margin: 0 0 7px;
+      color: #24231f;
+      font-size: clamp(18px, 3vw, 24px);
+      font-weight: 700;
+      line-height: 1.25;
+      text-transform: uppercase;
     }
     .intro p {
       margin: 0;
-      color: #858273;
-      font-size: 16px;
-      line-height: 1.5;
+      color: #46443e;
+      font-size: 13px;
+      line-height: 1.55;
     }
-    #chart { width: 100%; }
+    .receipt-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 0 auto 8px;
+      color: #46443e;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    #chart { position: relative; width: 100%; }
     #chart svg {
       display: block;
-      width: min(100%, 700px);
+      width: min(100%, 850px);
       height: auto;
       margin: 0 auto;
       overflow: visible;
     }
-    .word-tooltip {
+    #chart svg text {
+      font-family: "Courier New", Courier, monospace !important;
+    }
+    #chart svg .tick text { font-size: 11px; }
+    #chart svg .y-axis .tick line { stroke-dasharray: 2 4; }
+    .chart-tooltip {
       position: fixed;
       z-index: 10;
       display: none;
-      padding: 2px 8px 6px;
-      border: 1px solid #514b40;
-      border-radius: 3px;
-      background: #f3a343;
-      color: #433b30;
-      font-family: Georgia, "Times New Roman", serif;
-      font-size: 24px;
-      font-style: italic;
-      font-variant: small-caps;
-      line-height: 1;
+      max-width: 280px;
+      padding: 8px 10px;
+      border: 1px dashed #34322d;
+      background: #f8f9f7;
+      color: #24231f;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 12px;
+      line-height: 1.4;
       pointer-events: none;
-      white-space: nowrap;
     }
     .caption {
-      max-width: 580px;
-      margin: 0 auto;
-      text-align: center;
-      font-size: 13px;
-      line-height: 1.5;
+      max-width: 850px;
+      margin: 4px auto 0;
+      padding-top: 14px;
+      border-top: 1px dashed #77736a;
+      color: #46443e;
+      font-size: 11px;
+      line-height: 1.55;
+      text-align: left;
     }
-    .caption strong { font-weight: 400; }
+    .receipt-end {
+      margin: 17px 0 0;
+      color: #46443e;
+      font-size: 11px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
     @media (max-width: 600px) {
-      main { padding: 14px 8px; }
-      .caption { font-size: 12px; }
+      body { padding: 10px 6px; }
+      main { padding: 22px 10px 18px; }
+      .receipt-meta { font-size: 9px; }
+      .caption { font-size: 10px; }
     }
   </style>
 </head>
@@ -83,10 +146,16 @@
   <main>
     <div class="visualization">
       <header class="intro">
-        <h1>Nouns Still Dominate Both Lists, Verbs Remained Steady, and Adjectives Grew Modestly. Adverbs, However, Nearly Doubled</h1>
-        <p>Each square is one word, grouped by part-of-speech in each list. Hover the cells to see the words.</p>
+        <p class="receipt-brand">The Museum of Modern Art · New York</p>
+        <h1>Artist Origins / Collection Comparison</h1>
+        <p>MoMA Design Store featured artists compared with the artist collection</p>
       </header>
-      <div id="chart" aria-label="Comparison of words in the 1953 and 2023 lists, grouped by part of speech"></div>
+      <div class="receipt-meta">
+        <span>Item: artist nationality</span>
+        <span>Qty: 19 featured</span>
+      </div>
+      <div id="chart" aria-label="Overlaid comparison bar chart of artist nationality regions"></div>
+      <p class="receipt-end">— End of comparison —</p>
     </div>
     <p class="caption" id="caption"></p>
   </main>
